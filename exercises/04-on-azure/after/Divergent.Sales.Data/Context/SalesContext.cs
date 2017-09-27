@@ -15,6 +15,10 @@ namespace Divergent.Sales.Data.Context
         {
         }
 
+        public SalesContext(string conn) : base(conn)
+        {
+        }
+
         public IDbSet<Product> Products { get; set; }
         public IDbSet<Order> Orders { get; set; }
 

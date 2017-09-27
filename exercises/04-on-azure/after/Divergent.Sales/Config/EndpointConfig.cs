@@ -16,6 +16,7 @@ namespace Divergent.Sales.Config
     public class EndpointConfig : IConfigureThisEndpoint, AsA_Server
     {
         private static readonly ILog Log = LogManager.GetLogger<EndpointConfig>();
+        private readonly string connectionString;
 
         public EndpointConfig()
         {
@@ -24,14 +25,15 @@ namespace Divergent.Sales.Config
             if (Environment.UserInteractive)
                 Console.Title = "Divergent.Sales";
 
+            connectionString = ResourceConfig.GetSecret("https://appservicesmicrovault.vault.azure.net/secrets/Divergent-Sales-ConnectionString").GetAwaiter().GetResult();
+
             InitializeDatbase();
         }
 
         private void InitializeDatbase()
         {
             Log.Debug("Initializing database");
-
-            SalesContext context = new SalesContext();
+            SalesContext context = new SalesContext(connectionString);
             var products = context.Products.ToList();
 
             Log.DebugFormat("Database initialized, first product is {0}", products.First());
@@ -51,7 +53,7 @@ namespace Divergent.Sales.Config
             endpointConfiguration.UseTransport<MsmqTransport>()
                 .ConnectionString("deadLetter=false;journal=false");
             endpointConfiguration.UsePersistence<NHibernatePersistence>()
-                .ConnectionString(ConfigurationManager.ConnectionStrings["Divergent.Sales"].ToString());
+                .ConnectionString(connectionString);
 
             endpointConfiguration.SendFailedMessagesTo("error");
             endpointConfiguration.AuditProcessedMessagesTo("audit");
